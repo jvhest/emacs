@@ -1,0 +1,226 @@
+#+DESCRIPTION: Modules/Langs/Org-mode.org
+#+STARTUP: showeverything
+#+auto_tangle: nil
+
+#+begin_src elisp
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ORG-MODE.ORG
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+#+end_src
+
+
+** Variables
+
+*** Org-mode
+
+#+begin_src elisp
+(defvar my/org-dir-local "~/org-files"
+  "Base directory for org related file.")
+
+(defvar my/org-dir-sync "~/Dropbox/org"
+  "Base directory for org related file that need sync to android app.")
+#+end_src
+
+*** Org-agenda
+
+#+begin_src elisp
+(defvar my/agenda-projects (expand-file-name "projects.org" my/org-dir-local)
+  "Inbox file project related tasks.")
+
+(defvar my/agenda-notes (expand-file-name "notes.org" my/org-dir-local)
+  "Notes file.")
+
+(defvar my/agenda-archive (expand-file-name "archive.org" my/org-dir-local)
+  "Archive file for DONE TODOs.")
+
+(defvar my/agenda-index (expand-file-name "index.org" my/org-dir-sync)
+  "Inbox file for todo's.")
+
+(defvar my/agenda-inbox (expand-file-name "inbox.org" my/org-dir-sync)
+  "Personal tasks, reminders and so on.")
+#+end_src
+
+*** Org-capture
+
+#+begin_src elisp
+(defvar my/capture-bookmarks (expand-file-name "bookmarks.org" my/org-dir-local)
+  "Captured weblinks.")
+#+end_src
+
+** Org-mode
+
+#+begin_src elisp
+(use-package org
+  :straight (:type built-in)
+  :commands org-mode
+  :bind (:map org-mode-map
+              (("<f8>" . org-toggle-narrow-to-subtree)))
+
+  :custom
+  ;; Return or left-click with mouse follows link
+  (org-return-follows-link t)
+  (org-mouse-1-follows-link t)
+  ;; Display links as the description provided
+  (org-descriptive-links t)
+  ;; Hide markup markers
+  (org-hide-emphasis-markers t)
+
+  :hook
+  (org-mode . org-appear-mode)
+  (org-mode . (lambda () (hl-line-mode 1)))
+  ;; (org-mode . visual-line-mode)
+  ;; (org-mode . org-indent-mode)
+  (org-mode . (lambda () (electric-indent-mode -1)))
+  ;; (org-mode . variable-pitch-mode)
+  (org-mode . org-bullets-mode)
+
+  :config
+  (setq org-src-fontify-natively t                ;; Always use syntax highlighting of code blocks
+        org-src-tab-acts-natively t               ;; TAB in src blocks act same as lang’s major mode
+        org-startup-with-inline-images t          ;; Always show images
+        org-startup-indented t                    ;; Indent text according to the current header
+        org-indent-mode-turns-on-hiding-stars t
+        org-hide-emphasis-markers t               ;; Hides the symbols that makes text bold, italics
+        org-src-window-setup 'current-window      ;; editing code snippet in current window
+        org-fold-catch-invisible-edits 'smart          ;; Smart editing of hidden regions
+        org-highlight-latex-and-related '(latex)  ;; Highlight LaTeX fragments, snippets etc
+        org-pretty-entities t                     ;; Show entities as UTF8-characters when possible
+        org-list-allow-alphabetical t             ;; Allow lists to be a) etc
+        org-confirm-babel-evaluate nil            ;; Don't bug about executing code all the time
+        org-ellipsis " 󰛒"
+        org-edit-src-content-indentation 0
+        org-babel-python-command "python3"        ;; Newer is always better
+        org-auto-tangle-default nil               ;; activate auto-tangle with PROPERTY auto-tangle t
+        org-todo-keywords
+        '((sequence "TODO(t)" "NEXT(n)" "PROJ(p)" "|" "DONE(d)")))
+
+  ;; Configure which languages we can use in Org Babel code blocks
+  ;; NOTE: This slows down the startup of Org-mode a little bit
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((shell . t)
+     (emacs-lisp . t)
+     (python .t)
+     (sql . t)))
+
+  (use-package org-bullets)
+  (use-package org-appear)
+
+  (font-lock-add-keywords
+   'org-mode
+   '(("^ *\\([-]\\) "
+      (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+
+  ;; (add-to-list 'org-modules 'org-tempo t)
+  (require 'org-tempo)
+  (cl-pushnew '("sh" . "src sh") org-structure-template-alist)
+  (cl-pushnew '("se" . "src elisp") org-structure-template-alist)
+  (cl-pushnew '("sp" . "src python") org-structure-template-alist)
+  (cl-pushnew '("sl" . "src lisp") org-structure-template-alist)
+  (cl-pushnew '("sr" . "src racket") org-structure-template-alist))
+#+end_src
+
+** Org-auto-tangle
+
+#+begin_src elisp
+(use-package org-auto-tangle
+  :defer t
+  :hook (org-mode . org-auto-tangle-mode)
+  :config
+  (setq org-auto-tangle-default t))
+#+end_src
+
+** Visual-fill-column
+
+#+begin_src elisp
+(use-package visual-fill-column
+  :hook (org-mode . visual-fill-column-mode)
+  :config
+  (setq-default visual-fill-column-width my/fill-width)
+  (setq visual-fill-column-center-text nil))
+#+end_src
+
+** TOC-org
+
+#+begin_src elisp
+(use-package toc-org
+  :commands toc-org-enable
+  :hook ((markdown-mode . toc-org-mode)
+         (org-mode . toc-org-enable)))
+#+end_src
+
+** Org-Agenda
+
+#+begin_src elisp
+(use-package org-agenda
+  :straight (:type built-in)
+  :after org
+  :preface
+  (defun my/mark-done-and-archive()
+    "Mark the state of an `org-mode' item as DONE and archive it."
+    (interactive)
+    (org-todo 'done)
+    (org-archive-subtree))
+  :init
+  (add-to-list 'org-modules 'org-habit t)
+  :config
+  (setq org-agenda-files (list my/agenda-inbox
+                               my/agenda-notes)
+
+        org-refile-targets '((nil :maxlevel . 9)
+                             (org-agenda-files :maxlevel . 9))
+
+        org-agenda-skip-schedule-if-done t
+        org-agenda-skip-deadline-if-done t
+        org-agenda-skip-timestamp-if-done t
+        org-log-done 'time
+        org-enforce-todo-dependencies t
+        org-enforce-todo-checkbox-dependencies t
+        org-agenda-start-on-weekday 1 ;; Begin weeks today, not on the last Monday.
+        org-agenda-prefix-format '((agenda . " %i %?-12t% s")
+                                   (todo . " %i ")
+                                   (tags . " %i ")
+                                   (search . " %i "))
+        org-habit-graph-column 60))
+
+;; TODO: make keymap !
+;; (my-leader 'org-mode-map
+;;   "a" '(:ignore t :wk "Org-agenda")
+;;   "a v" '(org-agenda-list :wk "view")
+;;   "a o" '(org-agenda :wk "open")
+;;   "a a" '(my/mark-done-and-archive :wk "archive")
+;;   "a d" '(org-deadline :wk "deadline")
+;;   "a s" '(org-schedule :wk "schedule"))
+#+end_src
+
+** Org-Capture
+
+#+begin_src elisp
+(use-package org-capture
+  :straight (:type built-in)
+  :after org
+  :init
+  (setq org-capture-templates
+        '(("t" "Personal TODO" entry
+           (file+headline my/agenda-inbox "Inbox")
+           "** Todo %?\n  %t\n")
+          ("n" "Personal note" entry
+           (file+headline my/agenda-notes "Notes")
+           "* %?\n  %u\n  %a")
+          ("o" "Weblinks" entry
+           (file+headline my/capture-bookmarks "Weblinks")
+           "* %:annotation\n %?\n %u\n %i\n" :empty-lines-before 1))))
+
+;; (setq counsel-projectile-org-capture-templates
+;;       '(("pt" "[${name}] TODO" entry
+;;          (file+headline my/agenda-projects "${name}")
+;;          "* TODO %? %u\n")
+;;         ("pl" "[${name}] TODO" entry
+;;          (file+headline my/agenda-projects "${name}")
+;;          "* TODO %? %u\n%a")
+;;         ("pf" "[${name}] FIXME" entry
+;;          (file+headline my/agenda-projects "${name}")
+;;          "* FIXME %? %t\n")))))
+#+end_src
+

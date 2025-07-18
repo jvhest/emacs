@@ -1,0 +1,117 @@
+#+TITLE: GNU Emacs Config
+#+AUTHOR: jvh
+#+DESCRIPTION: Personal Emacs config.
+#+STARTUP: showeverything
+#+PROPERTY: header-args:elisp :tangle ./config.el :mkdirp yes
+#+auto_tangle: nil
+
+* TABLE OF CONTENT :TOC@2:
+- [[#emacs-configuration][Emacs Configuration]]
+  - [[#variables][Variables]]
+  - [[#settings][Settings]]
+  - [[#utils][Utils]]
+
+* Emacs Configuration
+
+#+begin_src elisp
+;;; config.el --- emacs configuration      -*- lexical-binding: t; -*-
+
+;; Maintainer: Jan van Hest
+;; Email: jan.vanhest@gmail.com
+
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;;; Commentary:
+
+;; Config file for EMACS.
+
+;;; Code:
+
+#+end_src
+
+
+** Variables
+
+#+begin_src elisp
+(defvar my/compile-on-save nil
+  "When non-nil, compile the file after saving it.")
+
+(defvar my/compile-on-startup nil
+  "When non-nil, compile EMACS LISP sources for the modules on startup.")
+#+end_src
+
+
+** Settings
+
+#+begin_src elisp
+(use-package emacs
+  :demand t
+  :hook
+  ;; Make shebang (#!) file executable when saved
+  (after-save . executable-make-buffer-file-executable-if-script-p)
+
+  :custom
+  (large-file-warning-threshold 100000000)
+  (global-auto-revert-non-file-buffers t)
+  (kill-do-not-save-duplicates t)
+
+  :config
+  (setq-default
+   help-window-select t                      ; Focus new help windows when opened
+   max-lisp-eval-depth 2000
+   byte-compile--use-old-handlers nil        ; Use the most recent byte code ops
+   vc-follow-symlinks t                      ; Always follow symbolic links
+   save-interprogram-paste-before-kill t     ; Save paste history when killing Emacs
+   repeat-mode 1))
+#+end_src
+
+
+#+INCLUDE: "./core/core.org"
+
+#+INCLUDE: "./tools/tools.org"
+
+#+INCLUDE: "./langs/langs.org"
+
+
+** Utils
+
+#+begin_src elisp
+(require 'compile-funcs)
+
+(defvar my/compile-tasks `((,lisp-source-dir)
+                           (,user-emacs-directory "early-init" "init" "config")))
+
+;;;;; modules
+(add-hook 'emacs-startup-hook ;; or kill-emacs-hook?
+          (lambda ()
+            (when my/compile-on-startup
+              (my/compile-modules))))
+
+;;;;; on save files
+(add-hook 'after-save-hook
+          (lambda ()
+            (when (and my/compile-on-save
+                       (string-equal major-mode "emacs-lisp-mode"))
+              (my/compile-buffer))))
+
+;;;;; on tangle
+(defun tangle-and-compile ()
+  "Tangle emacs.org and native compile "
+  (interactive)
+  (org-babel-tangle)
+  (if (> (length my/compile-tasks) 0)
+     (my/compile-modules)))
+#+end_src
+
+#+begin_src elisp
+(provide 'config)
+;;; config.el ends here
+#+end_src

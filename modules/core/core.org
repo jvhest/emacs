@@ -1,0 +1,87 @@
+#+DESCRIPTION: Modules/Core/Core.org
+#+STARTUP: showeverything
+#+auto_tangle: nil
+
+#+begin_src elisp
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; CORE.ORG
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+#+end_src
+
+
+** Variables
+
+#+begin_src elisp
+(defvar var-dir (expand-file-name "var" user-emacs-directory))
+
+(defvar lisp-source-dir (expand-file-name "site-lisp/" user-emacs-directory))
+(add-to-list 'load-path lisp-source-dir t)
+
+(let ((jh-info-dir (expand-file-name "docs/dir" user-emacs-directory)))
+  (when (file-exists-p jh-info-dir)
+    (require 'info)
+    (info-initialize)
+    (cl-pushnew (file-name-directory jh-info-dir) Info-directory-list)))
+
+(defvar my/compile-on-save nil
+  "When non-nil, compile the file after saving it.")
+
+(defvar my/compile-on-startup nil
+  "When non-nil, compile EMACS LISP sources for the modules on startup.")
+#+end_src
+
+** Package manager
+
+#+begin_src elisp
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
+      (bootstrap-version 7))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+
+(use-package straight
+  :custom
+  (straight-use-package-by-default t))
+;; :init
+;; (setq use-package-expand-minimally t))
+#+end_src
+
+** No-littering
+
+#+begin_src elisp
+(use-package no-littering
+  :demand t
+  :config
+  (setq custom-file (no-littering-expand-etc-file-name "custom.el"))
+  (setq auto-save-file-name-transforms
+        `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+  (setq backup-directory-alist
+        `((".*" . ,(no-littering-expand-var-file-name "backup/")))))
+#+end_src
+
+
+#+INCLUDE: ./ui.org
+
+#+INCLUDE: ./editor.org
+
+#+INCLUDE: ./windows.org
+
+#+INCLUDE: ./dired.org
+
+#+INCLUDE: ./minibuffer.org
+
+#+INCLUDE: ./completion.org
+
+#+INCLUDE: ./keybindings.org
+

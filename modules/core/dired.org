@@ -1,0 +1,112 @@
+#+DESCRIPTION: Modules/Core/Dired.org
+#+STARTUP: showeverything
+#+auto_tangle: nil
+
+#+begin_src elisp
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; DIRED.ORG
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+#+end_src
+
+** Dired
+
+#+begin_src elisp
+(use-package dired
+  :straight (:type built-in)
+  :defer 5
+  :commands (dired dired-jump)
+  :bind (("C-x C-j" . dired-jump)
+         :map dired-mode-map
+         ("F" . (lambda ()
+                  (interactive)
+                  (mapc #'find-file (reverse (dired-get-marked-files))))))
+  :custom (dired-listing-switches "-alh --group-directories-first")
+
+  :hook ((dired-mode . dired-hide-details-mode)
+         (dired-mode . dired-omit-mode)
+         (dired-mode . auto-revert-mode)
+         (dired-mode . hl-line-mode)
+         (dired-mode . (lambda () (all-the-icons-dired-mode t))))
+
+  :config
+  (setq ls-lisp-dirs-first t)
+  (setq dired-auto-revert-buffer #'dired-directory-changed-p)
+  (setq dired-kill-when-opening-new-dired-buffer t)
+  (setq dired-make-directory-clickable t) ; Emacs 29.1
+  (setq delete-by-moving-to-trash t)
+  (setq-default dired-dwim-target t))
+#+end_src
+
+** Dired-open
+
+#+begin_src elisp
+(use-package dired-open
+  :config
+  (setq dired-open-extensions '(("gif" . "sxiv")
+                                ("jpg" . "sxiv")
+                                ("png" . "sxiv")
+                                ("mkv" . "mpv")
+                                ("mp4" . "mpv"))))
+#+end_src
+
+** Peep-Dired
+
+#+begin_src elisp
+(use-package peep-dired
+  :after dired
+  :hook (evil-normalize-keymaps . peep-dired-hook)
+  :config
+    (evil-define-key 'normal dired-mode-map (kbd "h") 'dired-up-directory)
+    (evil-define-key 'normal dired-mode-map (kbd "l") 'dired-open-file) ; use dired-find-file instead if not using dired-open package
+    (evil-define-key 'normal peep-dired-mode-map (kbd "j") 'peep-dired-next-file)
+    (evil-define-key 'normal peep-dired-mode-map (kbd "k") 'peep-dired-prev-file)
+)
+#+end_src
+
+** Dired-x
+
+#+begin_src elisp
+(use-package dired-x
+:straight (:type built-in)
+:after dired
+:config
+(setq ls-lisp-use-insert-directory-program nil)
+(setq dired-clean-confirm-killing-deleted-buffers nil)
+(require 'ls-lisp)
+(setq directory-free-space-program nil)
+(setq dired-x-hands-off-my-keys t)
+(setq dired-omit-verbose nil
+      dired-omit-files
+      (concat dired-omit-files
+              "\\|^.DS_Store\\'"
+              "\\|^.project\\(?:ile\\)?\\'"
+              "\\|^.\\(svn\\|git\\)\\'"
+              "\\|^.ccls-cache\\'"
+              "\\|\\(?:\\.js\\)?\\.meta\\'"
+              "\\|\\.\\(?:elc\\|o\\|pyo\\|swp\\|class\\)\\'"))
+
+(setq dired-guess-shell-alist-user  ;; those are the suggestions for ! and & in Dired
+'(("\\.\\(?:docx\\|pdf\\|djvu\\|eps\\)\\'" "xdg-open")
+  ("\\.\\(?:jpe?g\\|png\\|gif\\|xpm\\)\\'" "feh" "xdg-open")
+  ("\\.\\(?:xcf\\)\\'" "xdg-open")
+  ("\\.csv\\'" "xdg-open")
+  ("\\.tex\\'" "xdg-open")
+  ("\\.\\(?:mp[4]\\|m4a\\|ogg\\|webm\\|mkv\\)" "mpv" "xdg-open")
+  ("\\.\\(?:mp4\\|avi\\|flv\\|rm\\|rmvb\\|ogv\\)\\(?:\\.part\\)?\\'" "xdg-open")
+  ("\\.\\(?:mp3\\|flac\\)\\'" "mpv" "xdg-open")
+  ("\\.html?\\'" "xdg-open")
+  ("\\.md\\'" "xdg-open"))))
+#+end_src
+
+** Dired-subtree
+
+#+begin_src elisp
+(use-package dired-subtree
+  :bind ( :map dired-mode-map
+          (("<tab>" . dired-subtree-toggle)
+           ("<backtab>" . dired-subtree-remove))) ; S-TAB
+  :config
+  (setq dired-subtree-use-backgrounds nil))
+#+end_src
+

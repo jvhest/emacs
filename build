@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+# save original config.el
+conf=config.el
+if [ -e "./${conf}" ]; then
+    cp "./${conf}" "./${conf}.bck"
+fi
+
+# build the new config.el file
+emacs --batch --load ./modules/build.el
+
+# cleanup temp export.org file
+exp="./exports.org"
+if [ -e "${exp}" ]; then
+    rm "${exp}"
+fi

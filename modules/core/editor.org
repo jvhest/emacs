@@ -1,0 +1,263 @@
+#+DESCRIPTION: Modules/Core/Editor.org
+#+STARTUP: showeverything
+#+auto_tangle: nil
+
+#+begin_src elisp
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EDITOR.ORG
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+#+end_src
+
+
+** Variables
+
+#+begin_src elisp
+(defvar my/fill-width 110
+  "The default width at which to wrap text.")
+
+(defvar my/tab-width 2
+  "The default width for indentation, in spaces.")
+#+end_src
+
+** Settings
+
+#+begin_src elisp
+(use-package emacs
+  :hook
+  (text-mode . auto-fill-mode)
+
+  ;; :bind ("C-s" . save-buffer)
+
+  :init
+  ;; No backup files
+  (setq make-backup-files nil
+        backup-inhibited nil
+        create-lockfiles nil)
+
+  (setq-default
+   indent-tabs-mode nil
+   tab-width my/tab-width
+   fill-column my/fill-width               ; Wrap lines after this point
+   compilation-scroll-output 'first-error  ; Stop at first error in compilation
+   word-wrap t
+   require-final-newline t
+   sentence-end-double-space nil
+   save-interprogram-paste-before-kill t
+   ;; Better support for files with long lines
+   bidi-paragraph-direction 'left-to-right
+   bidi-inhibit-bpa t)
+
+  (set-default-coding-systems 'utf-8)
+  (global-superword-mode 1)                ; e.g. this-is-a-symbol is one word
+  (global-auto-revert-mode 1)              ; Revert buffers when file has changed
+  (global-so-long-mode 1))                 ; Support for files with long lines
+#+end_src
+
+** Recentf
+
+#+begin_src elisp
+(use-package recentf
+  :hook ((prog-mode text-mode) . recentf-mode)
+  :custom (recentf-save-file
+           (no-littering-expand-var-file-name "recentf"))
+  :init
+  (setq recentf-max-saved-items 1000 ;; Total amount of saved recent files
+        recentf-auto-cleanup 'never) ;;  Never clean the history but append and remove the last
+  (recentf-mode))
+#+end_src
+
+** Saveplace
+
+#+begin_src elisp
+(use-package saveplace
+  :init (save-place-mode))
+#+end_src
+
+** Savehist
+
+#+begin_src elisp
+(use-package savehist
+  :init (savehist-mode 1)
+  :custom (savehist-file
+           (no-littering-expand-var-file-name "history"))
+  :config
+  (setq history-length 500)
+  (setq history-delete-duplicates t)
+  (setq savehist-save-minibuffer-history t)
+  (setq savehist-additional-variables '(register-alist kill-ring)))
+#+end_src
+
+** Electric-Pair-Mode
+
+The following eliminates <> from auto-pairing when electric-pair-mode is on.
+Otherwise, org-tempo is broken when you try to <s TAB
+
+#+begin_src elisp
+;; (setq electric-pair-pairs '((?\{ . ?\}) (?\( . ?\)) (?\[ . ?\]) (?\" . ?\")))
+(electric-pair-mode -1)
+ #+end_src
+
+** Multiple-Cursors
+
+#+begin_src elisp
+(use-package evil-mc
+  :bind
+  (("C-S-c C-S-c" . evil-mc-make-cursor-in-visual-selection-beg)
+
+  ("C->" . evil-mc-make-and-goto-next-match)
+  ("C-<" . evil-mc-make-and-goto-prev-match)
+  ("C-c C-<" . evil-mc-make-all-cursors)
+
+  ("C-\"" . evil-mc-skip-and-goto-next-match)
+  ("C-:" . evil-mc-undo-all-cursors))
+  :config
+  (global-evil-mc-mode 1))
+#+end_src
+
+** Aggressive-Indent
+
+#+begin_src elisp
+(use-package aggressive-indent
+  :defer 5
+  :hook ((emacs-lisp-mode lisp-mode org-src-mode) . aggressive-indent-mode))
+#+end_src
+
+** Yasnippet
+
+#+begin_src elisp
+(use-package yasnippet
+  :diminish yas-global-mode
+
+  :commands (yas-global-mode)
+
+  :hook ((prog-mode text-mode) . yas-global-mode)
+
+  :config
+  (setq yas-snippet-dirs (list (expand-file-name "snippets" user-emacs-directory)))
+  (yas-global-mode))
+
+(use-package yasnippet-snippets
+  :after yasnippet)
+#+end_src
+
+** Hydras
+
+*** Toggle-Hydra
+
+#+begin_src elisp
+(use-package emacs
+  :straight (:type built-in)
+  :preface
+  (defun toggle-line-numbers ()
+    "Toggle-line-numbers on/off."
+    (cond ((fboundp 'display-line-numbers-mode)
+           (display-line-numbers-mode (if display-line-numbers-mode -1 1)))
+          ((fboundp 'global-linum-mode)
+           (global-linum-mode (if global-linum-mode -1 1)))))
+
+  (defun toggle-transparency ()
+    "Toggle theme's transparency."
+    (let ((frame-alpha (frame-parameter nil 'alpha)))
+      (if (or (not frame-alpha)
+              (= (cadr frame-alpha) 100))
+          (set-frame-parameter nil 'alpha
+                               `(,my/frame-transparency
+                                 ,my/frame-transparency))
+        (set-frame-parameter nil 'alpha '(100 100)))))
+
+;  :general
+;  (my-leader
+;    "t h" '(toggles-hydra/body :wk "Toggle Hydra"))
+
+  :config
+  (pretty-hydra-define toggle-hydra
+    (:title "Toggles" :color amaranth :quit-key ("q" "C-g"))
+    ("Basic"
+     (("n" (toggle-line-numbers) "line number")
+      ("a" global-aggressive-indent-mode "aggressive indent" :toggle t)
+      ("c" flyspell-mode "spell check" :toggle t)
+      ("e" ef-themes-toggle "ef-themes")
+      ("s" prettify-symbols-mode "pretty symbol" :toggle t)
+      ("t" toggle-truncate-lines "truncate lines" :toggle t)
+      ("T" (toggle-transparency) "transparency")
+      ("v" variable-pitch-mode "variable pitch" :toggle t))
+     "Highlight"
+     (("l" global-hl-line-mode "line" :toggle t)
+      ("p" show-paren-mode "paren" :toggle t)
+      ("S" symbol-overlay-mode "symbol" :toggle t)
+      ("w" (setq-default show-trailing-whitespace (not show-trailing-whitespace))
+       "whitespace" :toggle show-trailing-whitespace)
+      ("h" global-hl-todo-mode "hl-todo" :toggle t))
+     "Program"
+     (("f" flycheck "flycheck" :toggle t)
+      ("O" hs-minor-mode "hideshow" :toggle t)
+      ("u" subword-mode "subword" :toggle t)
+      ("W" which-function-mode "which function" :toggle t)
+      ("E" toggle-debug-on-error "debug on error" :toggle (default-value 'debug-on-error))
+      ("Q" toggle-debug-on-quit "debug on quit" :toggle (default-value 'debug-on-quit))
+      ("v" global-diff-hl-mode "gutter" :toggle t)
+      ("V" diff-hl-flydiff-mode "live gutter" :toggle t)
+      ("M" diff-hl-margin-mode "margin gutter" :toggle t)
+      ("D" diff-hl-dired-mode "dired gutter" :toggle t)))))
+#+end_src
+
+*** Fonts-Hydra
+
+#+begin_src elisp
+(use-package emacs
+  :straight (:type built-in)
+
+  ;; :general
+  ;; (my-leader
+  ;;   "u s" '(scale-hydra/body :wk "Scale Text"))
+
+  :config
+  (pretty-hydra-define font-hydra
+    (:title "Fonts" :color pink :quit-key ("q" "C-g"))
+     ("Scale text"
+      (("+" text-scale-increase "in")
+      ("=" text-scale-increase "in")
+      ("-" text-scale-decrease "out")
+      ("0" (text-scale-increase 0) "reset")))))
+#+end_src
+
+*** Window-Hydra
+
+#+begin_src elisp
+(use-package emacs
+  :straight (:type built-in)
+
+  :config
+  (pretty-hydra-define window-hydra
+    (:title "Window" :color pink :quit-key ("q" "C-g"))
+     ("Resize window"
+      ((">" evil-window-increase-width "Increase width")
+       ("<" evil-window-decrease-width "Decrease width")
+       ("+" evil-window-increase-height "Increase height")
+       ("-" evil-window-decrease-height "Decrease height")
+       ("0" balance-windows "Balans windows")
+       ("f" fit-window-to-buffer "Fit to buffer")))))
+#+end_src
+
+*** Org-table-Hydra
+
+#+begin_src elisp
+(use-package emacs
+  :straight (:type built-in)
+
+  :config
+  (pretty-hydra-define org-table-hydra
+    (:title "Org-table" :color pink :quit-key ("q" "C-g"))
+     ("Table"
+      (("a" org-table-align "align table")
+       ("n" org-table-create "new table")
+       ("x" org-table-create-or-convert-from-region "create from region"))
+      "Tabel-insert"
+      (("c" org-table-insert-column "insert column")
+       ("r" org-table-insert-row "insert row")
+       ("h" org-table-insert-hline "insert hline"))
+      "Table-delete"
+      (("C" org-table-delete-column "delete column")
+       ("R" org-table-kill-row "delete row")))))
+#+end_src

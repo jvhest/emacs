@@ -1,0 +1,21 @@
+#+DESCRIPTION: Modules/Langs/Langs.org
+#+STARTUP: showeverything
+#+auto_tangle: nil
+
+#+begin_src elisp
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; LANGS.ORG
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+#+end_src
+
+
+#+INCLUDE: ./org-mode.org
+
+#+INCLUDE: ./markdown.org
+
+#+INCLUDE: ./python.org
+
+#+INCLUDE: ./lisp.org
+
+#+INCLUDE: ./haskell.org

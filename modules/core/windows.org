@@ -1,0 +1,71 @@
+#+DESCRIPTION: Modules/Core/Windows.org
+#+STARTUP: showeverything
+#+auto_tangle: nil
+
+#+begin_src elisp
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; WINDOWS.ORG
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+#+end_src
+
+
+** Windows
+
+#+begin_src elisp
+(setq switch-to-buffer-obey-display-actions t)
+
+;; see doc buffer-math-p
+
+(defun get-buffer-major-mode ()
+  "Get major-mode name of current buffer."
+  (buffer-local-value 'major-mode (current-buffer)))
+
+;; display on right-side.
+(add-to-list 'display-buffer-alist
+             '((or (major-mode . Info-mode)
+                   (major-mode . helpful-mode)
+                   (major-mode . help-mode)
+                   (major-mode . occur-mode))
+               (display-buffer-in-side-window)
+               (side . right)
+               (slot . 0)
+               (window-width . 0.45)
+               (inhibit-same-window . t)
+               (window-parameters
+                (no-other-windows . t))))
+
+;; display at top
+(add-to-list 'display-buffer-alist
+             '((or "\\*Flycheck.*")
+               (display-buffer-in-side-window)
+               (side . top)
+               (slot . 0)
+               (window-height . 0.20)
+               (inhibit-same-window . t)
+               (window-parameters
+                (no-other-windows . t))))
+
+;; display at bottom
+(add-to-list 'display-buffer-alist
+             ;; '((or (major-mode . dired-mode)
+             '((or "\\*Messages.*"
+                   "^\\(\\*e?shell\\|vterm\\).*"
+                   "\\*\\(Backtrace\\|Warnings\\|Compile-Log\\)\\*"
+                   "\\*\\(Output\\|Register Preview\\).*"
+                   ".*\\*\\(Completions\\|Embark Live Occur\\).*"
+                   "\\*Embark Occur.*")
+               (display-buffer-in-side-window)
+               (side . bottom)
+               (slot . 0)
+               (window-height . 0.30)
+               (inhibit-same-window . t)
+               (window-parameters
+                (no-other-windows . t))))
+#+end_src
+
+*** Winner-Mode
+
+#+begin_src elisp
+(winner-mode 1)
+#+end_src

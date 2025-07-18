@@ -1,0 +1,49 @@
+#+DESCRIPTION: Modules/Langs/Lisp.org
+#+STARTUP: showeverything
+#+auto_tangle: nil
+
+#+begin_src elisp
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; LISP.ORG
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+#+end_src
+
+
+** Racket-Mode
+
+#+begin_src elisp
+(use-package racket-mode
+  :config
+  (cl-pushnew  "~/.local/racket/bin" exec-path)
+  (setf racket-program "racket"))
+#+end_src
+
+** Common Lisp
+
+#+begin_src elisp
+(use-package lisp-mode
+  :straight (:type built-in)
+  :config
+  (cl-pushnew  "/usr/bin" exec-path)
+  (setq inferior-lisp-program "sbcl"))
+
+(use-package slime
+  :config
+  (slime-setup '(slime-fancy slime-quicklisp slime-asdf slime-mrepl)))
+#+end_src
+
+** Elisp-slime-nav
+
+#+begin_src elisp
+(use-package elisp-slime-nav
+  :after evil
+  :hook (emacs-lisp-mode . my/lisp-hook)
+  :preface
+  (defun my/lisp-hook ()
+    (elisp-slime-nav-mode)
+    (eldoc-mode))
+  :config
+  (evil-define-key 'normal emacs-lisp-mode-map (kbd "K")
+    'elisp-slime-nav-describe-elisp-thing-at-point))
+#+end_src

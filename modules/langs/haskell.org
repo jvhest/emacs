@@ -1,0 +1,20 @@
+#+DESCRIPTION: Modules/Langs/Haskell.org
+#+STARTUP: showeverything
+#+auto_tangle: nil
+
+#+begin_src elisp
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; HASKELL.ORG
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+#+end_src
+
+
+** Haskell
+
+#+begin_src elisp
+(use-package haskell-mode
+  :config
+ (setq haskell-interactive-popup-errors nil))
+#+end_src
+
