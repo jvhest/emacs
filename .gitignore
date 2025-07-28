@@ -5,3 +5,6 @@ etc/
 snippets/
 straight/
 var/
+
+config.el
+config.el.bck
