@@ -1637,6 +1637,28 @@
   (evil-define-key 'normal emacs-lisp-mode-map (kbd "K")
     'elisp-slime-nav-describe-elisp-thing-at-point))
 
+;; (use-package scheme-mode
+;;   :ensure nil
+;;   :mode "\\.sld\\'")
+
+(use-package geiser
+  :config
+  ;; (setq geiser-default-implementation 'gambit)
+  ;; (setq geiser-active-implementations '(gambit guile))
+  ;; (setq geiser-implementations-alist '(((regexp "\\.scm$") gambit)
+  ;;                                      ((regexp "\\.sld") gambit)))
+  ;; (setq geiser-repl-default-port 44555) ; For Gambit Scheme
+  (setq geiser-default-implementation 'guile)
+  (setq geiser-active-implementations '(guile))
+  (setq geiser-implementations-alist '(((regexp "\\.scm$") guile))))
+
+(use-package geiser-guile
+  :after geiser)
+
+;; (with-eval-after-load 'geiser-guile
+;;   ;; (add-to-list 'geiser-guile-load-path "~/.dotfiles")
+;;   (add-to-list 'geiser-guile-load-path "~/Projects/Code/guix"))
+
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HASKELL.ORG
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;

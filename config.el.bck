@@ -880,11 +880,10 @@
   (define-key key-translation-map (kbd "ESC") (kbd "C-g"))
   (define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
   (define-key evil-insert-state-map (kbd "C-h") 'evil-delete-backward-char-and-join)
-  (evil-define-key 'normal dired-mode-map (kbd "o") 'dired-find-file-other-window)
   (setq evil-vsplit-window-right t)
   (setq evil-split-window-below t)
   (evil-set-initial-state 'messages-buffer-mode 'normal)
-  ;; (evil-set-initial-state 'dired-mode 'emacs)
+  (evil-set-initial-state 'dired-mode 'emacs)
   (evil-set-undo-system 'undo-redo)
   ;; Use visual line motions even outside of visual-line-mode buffers
   (evil-global-set-key 'motion "j" 'evil-next-visual-line)
@@ -1637,6 +1636,30 @@
   :config
   (evil-define-key 'normal emacs-lisp-mode-map (kbd "K")
     'elisp-slime-nav-describe-elisp-thing-at-point))
+
+;; (use-package scheme-mode
+;;   :ensure nil
+;;   :mode "\\.sld\\'")
+
+(use-package geiser
+  :config
+  ;; (setq geiser-default-implementation 'gambit)
+  ;; (setq geiser-active-implementations '(gambit guile))
+  ;; (setq geiser-implementations-alist '(((regexp "\\.scm$") gambit)
+  ;;                                      ((regexp "\\.sld") gambit)))
+  ;; (setq geiser-repl-default-port 44555) ; For Gambit Scheme
+  (setq geiser-default-implementation 'guile)
+  (setq geiser-active-implementations '(guile))
+  (setq geiser-implementations-alist '(((regexp "\\.scm$") guile))))
+
+(use-package geiser-guile
+  :after geiser
+  :config
+  (setq geiser-guile-binary "guile3"))
+
+;; (with-eval-after-load 'geiser-guile
+;;   ;; (add-to-list 'geiser-guile-load-path "~/.dotfiles")
+;;   (add-to-list 'geiser-guile-load-path "~/Projects/Code/guix"))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; HASKELL.ORG
